@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Coding Round - MOCKMATE</title>
+
+    <!-- Ace Editor -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+
+    <!-- Markdown & Sanitize -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+
+    <!-- Fonts: Codystar (Headers) & Roboto Mono (Body/Code) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Codystar:wght@300;400&family=Roboto+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* --- NOTHING OS THEME VARIABLES --- */
+      :root {
+        --bg-body: #000000;
+        --bg-panel: #000000;
+        --text-main: #ffffff;
+        --text-muted: #666666;
+        --border-color: #ffffff; /* High contrast wireframe */
+        --accent-active: #ffffff;
+        --success: #ffffff; /* Success is white in monochrome theme */
+        --error: #ff0000;
+        --card-radius: 0px; /* Sharper corners for IDE feel */
+        --font-display: "Codystar", display;
+        --font-body: "Roboto Mono", monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: var(--font-body);
+        background-color: var(--bg-body);
+        color: var(--text-main);
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+
+        /* Dot Matrix Grid Background */
+        background-image: radial-gradient(#333 1px, transparent 1px);
+        background-size: 30px 30px;
+      }
+
+      /* --- HEADER --- */
+      .header {
+        height: 60px;
+        background: rgba(0, 0, 0, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+        border-bottom: 1px dashed var(--text-muted);
+        z-index: 10;
+      }
+      .brand {
+        font-family: var(--font-display);
+        font-weight: 400;
+        font-size: 20px;
+        color: var(--text-main);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+      .timer {
+        font-size: 12px;
+        color: var(--text-muted);
+        border: 1px solid var(--text-muted);
+        padding: 4px 10px;
+        border-radius: 50px;
+        text-transform: uppercase;
+      }
+
+      /* --- MAIN LAYOUT --- */
+      .workspace {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+        padding: 20px;
+        gap: 20px;
+      }
+
+      /* LEFT PANEL: Problem & Output */
+      .panel-left {
+        width: 35%;
+        background: var(--bg-panel);
+        border: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        border-radius: 12px;
+      }
+
+      .tab-header {
+        padding: 15px 20px;
+        background: transparent;
+        font-family: var(--font-display);
+        font-size: 14px;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--text-muted);
+        color: var(--text-main);
+      }
+
+      .content-box {
+        padding: 20px;
+      }
+
+      h2 {
+        font-family: var(--font-display);
+        font-size: 18px;
+        margin-bottom: 15px;
+        color: var(--text-main);
+        text-transform: uppercase;
+      }
+      p {
+        font-size: 13px;
+        line-height: 1.6;
+        color: #ddd;
+        margin-bottom: 20px;
+      }
+
+      /* Hint Box */
+      .hint-box {
+        background: transparent;
+        border: 1px dashed var(--text-muted);
+        padding: 15px;
+        margin-top: 15px;
+        font-size: 12px;
+        display: none;
+        color: var(--text-muted);
+      }
+
+      /* Hint Markdown Styling */
+      .hint-box code {
+        background: #222;
+        padding: 2px 4px;
+        border-radius: 4px;
+      }
+
+      /* Results Area */
+      .results-area {
+        border-top: 1px solid var(--border-color);
+        margin-top: auto;
+        background: #000;
+        padding: 20px;
+      }
+
+      .score-badge {
+        display: inline-block;
+        padding: 6px 16px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 12px;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+        font-family: var(--font-display);
+      }
+      /* Pass: White on Black */
+      .score-pass {
+        background: var(--text-main);
+        color: #000;
+        border: 1px solid var(--text-main);
+      }
+      /* Fail: Transparent Red Wireframe */
+      .score-fail {
+        background: transparent;
+        color: var(--error);
+        border: 1px solid var(--error);
+      }
+
+      .test-case {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        padding: 8px 0;
+        border-bottom: 1px dashed var(--text-muted);
+        font-family: var(--font-body);
+      }
+      .test-case:last-child {
+        border-bottom: none;
+      }
+
+      .pass {
+        color: var(--text-main);
+        font-weight: bold;
+      }
+      .fail {
+        color: var(--error);
+        font-weight: bold;
+      }
+
+      /* RIGHT PANEL: Editor */
+      .panel-right {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      #editor {
+        flex: 1;
+        font-size: 14px;
+        /* Force Ace to fit the aesthetic slightly better */
+        background-color: #000 !important;
+      }
+      /* Overriding Ace Gutter */
+      .ace_gutter {
+        background: #111 !important;
+        color: #666 !important;
+        border-right: 1px solid #333 !important;
+      }
+
+      /* --- ACTION BAR --- */
+      .action-bar {
+        height: 70px;
+        background: transparent;
+        border-top: 1px dashed var(--text-muted);
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 0 24px;
+        gap: 20px;
+      }
+
+      .btn {
+        border: 1px solid var(--text-main);
+        padding: 12px 24px;
+        border-radius: 50px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-family: var(--font-display);
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      /* Secondary: Transparent Wireframe */
+      .btn-secondary {
+        background: transparent;
+        color: var(--text-muted);
+        border-color: var(--text-muted);
+      }
+      .btn-secondary:hover {
+        border-color: var(--text-main);
+        color: var(--text-main);
+      }
+
+      /* Primary: Solid White */
+      .btn-primary {
+        background: var(--text-main);
+        color: #000;
+        border-color: var(--text-main);
+      }
+      .btn-primary:hover {
+        background: #000;
+        color: var(--text-main);
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+      }
+
+      /* Submit: Red Wireframe (Danger) */
+      .btn-submit {
+        background: transparent;
+        color: var(--error);
+        border-color: var(--error);
+      }
+      .btn-submit:hover {
+        background: var(--error);
+        color: #000;
+      }
+
+      /* Spinner */
+      .spinner {
+        display: none;
+        width: 14px;
+        height: 14px;
+        border: 2px solid #000;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      /* Spinner invert on hover for primary btn */
+      .btn-primary:hover .spinner {
+        border-color: #fff;
+        border-top-color: transparent;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="brand">MOCKMATE IDE</div>
+      <div class="timer">PYTHON 3.9</div>
+    </div>
+
+    <div class="workspace">
+      <!-- Left Panel: Question -->
+      <div class="panel-left">
+        <div class="tab-header">Problem Statement</div>
+        <div class="content-box">
+          <h2>Challenge</h2>
+          <p id="questionText">{{ question }}</p>
+
+          <button
+            class="btn btn-secondary"
+            style="font-size: 11px; padding: 8px 16px"
+            onclick="getHint()"
+          >
+            NEED A HINT?
+          </button>
+          <div id="hintBox" class="hint-box"></div>
+        </div>
+
+        <!-- Results Area (Hidden initially) -->
+        <div class="results-area" id="resultsArea" style="display: none">
+          <div
+            class="tab-header"
+            style="border: none; padding-left: 0; margin-bottom: 10px"
+          >
+            Output
+          </div>
+
+          <div id="scoreDisplay"></div>
+          <p id="feedbackText" style="font-size: 12px; color: #ccc"></p>
+
+          <div style="margin-top: 20px">
+            <div
+              class="tab-header"
+              style="
+                border: none;
+                padding: 0;
+                font-size: 12px;
+                margin-bottom: 10px;
+              "
+            >
+              Test Cases
+            </div>
+            <div id="testCasesList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel: Editor -->
+      <div class="panel-right">
+        <div id="editor">def solution(): # Write your code here pass</div>
+      </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+      <button class="btn btn-primary" onclick="runCode()">
+        <span id="runText">RUN & EVALUATE</span>
+        <span id="runSpinner" class="spinner"></span>
+      </button>
+
+      <button class="btn btn-submit" onclick="finishSession()">
+        FINISH INTERVIEW
+      </button>
+    </div>
+
+    <script>
+      // 1. Initialize Ace Editor
+      const editor = ace.edit("editor");
+      editor.setTheme("ace/theme/monokai"); // Matches dark theme best
+      editor.session.setMode("ace/mode/python");
+      editor.setShowPrintMargin(false);
+      editor.setOptions({
+        fontFamily: "'Roboto Mono', monospace",
+        fontSize: "14px",
+      });
+
+      // 2. Get Context (Chat ID)
+      const urlParams = new URLSearchParams(window.location.search);
+      const chatID = urlParams.get("chat_id") || "{{ chat_id }}"; // Fallback to jinja variable
+
+      // 3. Get Hint Logic
+      async function getHint() {
+        const question = document.getElementById("questionText").innerText;
+        const hintBox = document.getElementById("hintBox");
+
+        hintBox.style.display = "block";
+        hintBox.innerText = "ACCESSING DATABASE...";
+
+        try {
+          const res = await fetch("/get_coding_hint", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ question: question }),
+          });
+          const data = await res.json();
+          const rawHint = data.hint || "";
+          const hintHtml = rawHint
+            ? DOMPurify.sanitize(
+                marked.parse(rawHint, { gfm: true, breaks: true })
+              )
+            : "<em>No hint available.</em>";
+          hintBox.innerHTML = "💡 HINT: " + hintHtml;
+        } catch (e) {
+          hintBox.innerText = "ERROR FETCHING HINT.";
+        }
+      }
+
+      // 4. Run Code Logic
+      async function runCode() {
+        const code = editor.getValue();
+        console.log(
+          "Code being sent (with indentation):",
+          JSON.stringify(code)
+        ); // Debug
+        const question = document.getElementById("questionText").innerText;
+
+        // UI Loading State
+        document.getElementById("runText").style.display = "none";
+        document.getElementById("runSpinner").style.display = "inline-block";
+        document.getElementById("resultsArea").style.display = "none";
+
+        try {
+          const res = await fetch("/evaluate_code", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              code: code,
+              language: "python",
+              question: question,
+              chat_id: chatID, // Critical: Links score to session
+            }),
+          });
+
+          const data = await res.json();
+          displayResults(data);
+        } catch (err) {
+          alert("Error executing code: " + err);
+        } finally {
+          document.getElementById("runText").style.display = "inline";
+          document.getElementById("runSpinner").style.display = "none";
+        }
+      }
+
+      function displayResults(data) {
+        const area = document.getElementById("resultsArea");
+        area.style.display = "block";
+
+        // Score Badge
+        const scoreDiv = document.getElementById("scoreDisplay");
+        const score = data.score || 0;
+        const isPass = score >= 7; // Threshold example
+
+        scoreDiv.innerHTML = `<span class="score-badge ${
+          isPass ? "score-pass" : "score-fail"
+        }">SCORE: ${score}/10</span>`;
+
+        // Feedback
+        const rawFeedback = data.feedback || "";
+        const feedbackHtml = rawFeedback
+          ? DOMPurify.sanitize(
+              marked.parse(rawFeedback, { gfm: true, breaks: true })
+            )
+          : "<em>No feedback provided.</em>";
+        document.getElementById("feedbackText").innerHTML = feedbackHtml;
+
+        // Test Cases
+        const list = document.getElementById("testCasesList");
+        list.innerHTML = "";
+
+        if (data.test_cases_results) {
+          data.test_cases_results.forEach((tc, index) => {
+            const div = document.createElement("div");
+            div.className = "test-case";
+            div.innerHTML = `
+                        <span>CASE ${index + 1}</span>
+                        <span class="${tc.passed ? "pass" : "fail"}">${
+              tc.passed ? "PASS" : "FAIL"
+            }</span>
+                    `;
+            list.appendChild(div);
+          });
+        }
+      }
+
+      // 5. Finish Session Logic
+      function finishSession() {
+        if (
+          confirm(
+            "ARE YOU SURE YOU WANT TO FINISH? THIS WILL RETURN TO DASHBOARD."
+          )
+        ) {
+          window.location.href = "/dashboard";
+        }
+      }
+    </script>
+  </body>
+</html>

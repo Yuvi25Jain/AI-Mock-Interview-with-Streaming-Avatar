@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Sign Up - MOCKMATE</title>
+    <!-- Importing Codystar and Roboto Mono for the Nothing OS look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Codystar:wght@300;400&family=Roboto+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root {
+        --bg-color: #000000;
+        --text-main: #ffffff;
+        --text-muted: #666666;
+        --border-color: #333333;
+        --accent-active: #ffffff;
+        --card-radius: 24px;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Roboto Mono", monospace; /* Monospaced for industrial feel */
+        color: var(--text-main);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background-color: var(--bg-color);
+
+        /* Replacing the colorful gradient with a Dot Matrix Grid 
+           This preserves your JS parallax effect (moving dots) while matching the theme.
+        */
+        background-image: radial-gradient(
+          var(--border-color) 1px,
+          transparent 1px
+        );
+        background-size: 30px 30px; /* Grid spacing */
+        transition: background-position 0.1s ease-out; /* Smoother interaction with your script */
+      }
+
+      /* Brand Bar */
+      .brand-bar {
+        background: rgba(0, 0, 0, 0.8); /* Darker, less blur */
+        border-bottom: 1px dashed var(--border-color); /* Dashed line separator */
+        padding: 20px 40px;
+        text-align: center;
+      }
+
+      .brand-bar h1 {
+        font-family: "Codystar", display; /* Dot matrix font */
+        font-size: 32px;
+        font-weight: 400;
+        color: var(--text-main);
+        margin-bottom: 5px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      .brand-bar p {
+        font-size: 12px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      /* Main Content */
+      .main-content {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+      }
+
+      /* Form Control - Wireframe Card Style */
+      .form-control {
+        background-color: #000000;
+        border: 1px solid var(--text-main); /* High contrast white border */
+        box-shadow: none; /* Removed soft shadow for flat look */
+        width: 400px;
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+        gap: 20px; /* Increased gap for better spacing */
+        padding: 40px;
+        border-radius: var(--card-radius);
+        position: relative;
+      }
+
+      /* Title */
+      .title {
+        font-family: "Codystar", display;
+        font-size: 28px;
+        font-weight: 400;
+        text-align: center;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+      }
+
+      .input-field {
+        position: relative;
+        width: 100%;
+      }
+
+      /* Input Styling */
+      .input,
+      input[type="text"],
+      input[type="password"] {
+        /* Ensuring selectors catch the inputs */
+        margin-top: 15px;
+        width: 100%;
+        outline: none;
+        border-radius: 8px; /* Slightly softer corners */
+        height: 50px;
+        border: 1px solid var(--border-color); /* Subtle dark grey border */
+        background: transparent; /* See-through */
+        padding-left: 15px;
+        color: var(--text-main);
+        font-family: "Roboto Mono", monospace;
+        transition: border-color 0.3s ease;
+        font-size: 16px; /* Ensure readable font size */
+      }
+
+      .input:focus,
+      input[type="text"]:focus,
+      input[type="password"]:focus {
+        border: 1px solid var(--accent-active); /* White border on focus */
+      }
+
+      /* Label Styling */
+      .input-field .label {
+        position: absolute;
+        top: 28px;
+        left: 15px;
+        color: var(--text-muted);
+        font-size: 14px;
+        transition: all 0.3s ease;
+        pointer-events: none;
+        z-index: 2;
+        background-color: #000; /* Masks the border line behind it */
+        padding: 0 5px;
+      }
+
+      /* Handling label position on focus or when valid (has content) */
+      .input-field input:focus ~ .label,
+      .input-field input:valid ~ .label {
+        top: 6px;
+        left: 10px;
+        font-size: 11px;
+        color: var(--text-main);
+        font-weight: 500;
+      }
+
+      /* Submit Button */
+      .submit-btn {
+        margin-top: 20px;
+        height: 55px;
+        background: var(--text-main); /* Solid White */
+        border-radius: 50px; /* Pill shape */
+        border: 1px solid var(--text-main);
+        outline: none;
+        color: #000000; /* Black Text */
+        font-size: 18px;
+        font-family: "Codystar", display;
+        font-weight: 600;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: none; /* Remove gradient shadow */
+      }
+
+      .submit-btn:hover {
+        background: #000000;
+        color: var(--text-main);
+        border: 1px solid var(--text-main);
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.2); /* Glow effect */
+      }
+
+      /* Links */
+      .login-link {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+
+      .login-link a {
+        color: var(--text-main);
+        text-decoration: none;
+        font-weight: 500;
+        border-bottom: 1px dotted var(--text-muted);
+      }
+
+      .login-link a:hover {
+        text-decoration: none;
+        border-bottom: 1px solid var(--text-main);
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Brand Bar -->
+    <div class="brand-bar">
+      <h1>MOCKMATE</h1>
+      <p>The AI coach that turns practice into offers.</p>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <form class="form-control" method="POST">
+        <p class="title">Create Account</p>
+
+        <div class="input-field">
+          <input type="text" name="username" value="{{ username }}" required />
+          <label class="label">Username</label>
+        </div>
+
+        <div class="input-field">
+          <input
+            type="password"
+            name="password"
+            value="{{ password }}"
+            required
+          />
+          <label class="label">Password</label>
+        </div>
+
+        <button type="submit" class="submit-btn">Sign Up</button>
+
+        <p class="login-link">
+          Already have an account? <a href="/login">Login</a>
+        </p>
+      </form>
+    </div>
+
+    <script>
+      // Subtle background parallax effect
+      document.addEventListener("mousemove", (e) => {
+        const moveX = (e.clientX / window.innerWidth - 0.5) * 20;
+        const moveY = (e.clientY / window.innerHeight - 0.5) * 20;
+
+        document.body.style.backgroundPosition = `${moveX}px ${moveY}px`;
+      });
+    </script>
+  </body>
+</html>

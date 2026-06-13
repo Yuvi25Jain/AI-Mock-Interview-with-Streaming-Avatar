@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Upload JD - MOCKMATE</title>
+    <!-- Importing Codystar and Roboto Mono for the Nothing OS look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Codystar:wght@300;400&family=Roboto+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root {
+        --bg-color: #000000;
+        --text-main: #ffffff;
+        --text-muted: #666666;
+        --border-color: #333333;
+        --accent-active: #ffffff;
+        --card-radius: 24px;
+        --font-display: "Codystar", display;
+        --font-body: "Roboto Mono", monospace;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: var(--font-body);
+        color: var(--text-main);
+        min-height: 100vh;
+        background-color: var(--bg-color);
+
+        /* Nothing OS Dot Matrix Grid Background */
+        background-image: radial-gradient(
+          var(--border-color) 1px,
+          transparent 1px
+        );
+        background-size: 30px 30px;
+        transition: background-position 0.1s ease-out;
+      }
+
+      /* Full-page flex wrapper to handle centering */
+      .page {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 450px;
+        padding: 40px;
+
+        /* Wireframe Card Style */
+        background: #000000;
+        border: 1px solid var(--text-main);
+        border-radius: var(--card-radius);
+        position: relative;
+        box-shadow: none;
+      }
+
+      h2 {
+        text-align: center;
+        margin: 0 0 30px;
+        font-family: var(--font-display);
+        font-size: 24px;
+        font-weight: 400;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      label {
+        display: block;
+        font-size: 13px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        margin-bottom: 12px;
+        letter-spacing: 1px;
+      }
+
+      /* Hide native file input */
+      input[type="file"] {
+        display: none;
+      }
+
+      /* Custom "Choose file" button - Wireframe Style */
+      .custom-file-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 15px;
+        width: 100%;
+        text-align: center;
+
+        background: transparent;
+        border: 1px dashed var(--text-muted);
+        border-radius: 12px;
+        color: var(--text-main);
+
+        font-family: var(--font-body);
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .custom-file-btn:hover {
+        border-color: var(--text-main);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .file-name {
+        margin-top: 15px;
+        min-height: 20px;
+        font-size: 13px;
+        color: var(--text-main);
+        text-align: center;
+        word-break: break-all;
+        font-style: italic;
+      }
+
+      button {
+        width: 100%;
+        padding: 16px;
+        margin-top: 25px;
+
+        /* Solid White Pill Button */
+        background: var(--text-main);
+        color: #000000;
+        border: 1px solid var(--text-main);
+        border-radius: 50px;
+
+        font-family: var(--font-display);
+        font-size: 18px;
+        font-weight: 600;
+        text-transform: uppercase;
+        cursor: pointer;
+
+        transition: all 0.2s ease;
+        box-shadow: none;
+      }
+
+      button:hover {
+        background: #000000;
+        color: var(--text-main);
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+      }
+
+      p {
+        margin-top: 30px;
+        text-align: center;
+        font-size: 12px;
+      }
+
+      a {
+        color: var(--text-muted);
+        text-decoration: none;
+        border-bottom: 1px dotted var(--text-muted);
+        transition: all 0.2s;
+        text-transform: uppercase;
+      }
+
+      a:hover {
+        color: var(--text-main);
+        border-bottom: 1px solid var(--text-main);
+      }
+    </style>
+
+    <script>
+      function showFileName(input) {
+        const fileNameDisplay = document.getElementById("file-name-display");
+        if (input.files.length > 0) {
+          fileNameDisplay.textContent = "> " + input.files[0].name;
+          fileNameDisplay.style.color = "#ffffff";
+        } else {
+          fileNameDisplay.textContent = "";
+        }
+      }
+
+      // Subtle background parallax effect
+      document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("mousemove", (e) => {
+          const moveX = (e.clientX / window.innerWidth - 0.5) * 20;
+          const moveY = (e.clientY / window.innerHeight - 0.5) * 20;
+
+          document.body.style.backgroundPosition = `${moveX}px ${moveY}px`;
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div class="page">
+      <div class="container">
+        <h2>Upload Job Description</h2>
+
+        <form method="POST" enctype="multipart/form-data">
+          <label>SELECT PDF FILE:</label>
+
+          <label class="custom-file-btn">
+            [ CLICK TO BROWSE ]
+            <input
+              type="file"
+              name="jd_file"
+              accept="application/pdf"
+              required
+              onchange="showFileName(this)"
+            />
+          </label>
+
+          <div id="file-name-display" class="file-name"></div>
+
+          <button type="submit">Upload</button>
+        </form>
+
+        <p>
+          <a href="{{ url_for('dashboard.index') }}">← Back to Dashboard</a>
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
