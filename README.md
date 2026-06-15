@@ -253,7 +253,7 @@ http://127.0.0.1:5000
 
 ## 👨‍💻 Developed By
 
-**Yuvi Jain**
+**Yuvanshi Bhalawat , Yukti Baldua , Siya Purohit , Tulja Vishwakarma**
 
 AI Mock Interview Platform – Final Year Project
 
