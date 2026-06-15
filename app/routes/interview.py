@@ -21,22 +21,31 @@ def start_chat_session():
     Initializes a new chat session in the DB.
     Expects 'jd_id' in the JSON body to link this session to a specific Job Description.
     """
+
     chat_id = str(uuid.uuid4())
     session["chat_id"] = chat_id
-    
-    data = request.json or {}
-    jd_id = data.get('jd_id')  # Passed from the Analyze page "Enter Interview" button
 
-    # Persist chat metadata linked to the JD
+    # Prevent 415 error when frontend sends empty POST
+    data = request.get_json(silent=True) or {}
+    jd_id = data.get('jd_id')
+
     db = get_db()
+
     db.execute(
-        "INSERT INTO chats (id, username, jd_id, started_at, last_activity) VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+        """
+        INSERT INTO chats 
+        (id, username, jd_id, started_at, last_activity)
+        VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        """,
         (chat_id, session.get("username"), jd_id)
     )
+
     db.commit()
 
-    return jsonify({"chat_id": chat_id})
-
+    return jsonify({
+        "chat_id": chat_id,
+        "status": "success"
+    })
 @bp.route('/start_session', methods=['POST'])
 def start_heygen_session():
     """Starts the HeyGen Interactive Avatar session."""

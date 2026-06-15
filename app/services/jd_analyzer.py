@@ -1,153 +1,420 @@
 import fitz  # PyMuPDF
 import io
 import json
+import re
 import numpy as np
 import easyocr
+import torch
+
 from PIL import Image
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from app.services.llm_factory import LLMFactory
-import torch
 
-# --- Global Caching for OCR ---
-# This ensures the heavy EasyOCR model is loaded only ONCE per application run,
-# not every time a user uploads a file.
+from app.services.llm_factory import LLMFactory
+
+
+# -----------------------------
+# Global OCR Cache
+# -----------------------------
+
 _SHARED_OCR_READER = None
 
+
 def get_ocr_reader():
+    """
+    Loads EasyOCR only once during application runtime.
+    """
     global _SHARED_OCR_READER
+
     if _SHARED_OCR_READER is None:
-        print("Initializing EasyOCR Model... (This happens only once)")
-        # Set gpu=True if you have a compatible CUDA device
-        _SHARED_OCR_READER = easyocr.Reader(['en'], gpu=torch.cuda.is_available())
+        print("Initializing EasyOCR model...")
+
+        _SHARED_OCR_READER = easyocr.Reader(
+            ["en"],
+            gpu=torch.cuda.is_available()
+        )
+
     return _SHARED_OCR_READER
 
+
+# -----------------------------
+# JD Analyzer Class
+# -----------------------------
+
 class JDAnalyzer:
+
     def __init__(self):
+        """
+        Initialize local Ollama model.
+        """
         self.llm = LLMFactory.get_ollama_tool()
-        # Note: We no longer initialize self.reader here to prevent bottlenecks.
+
 
     def extract_text_from_pdf(self, pdf_path):
-        """Extracts text from PDF using OCR (EasyOCR) only if necessary."""
+        """
+        Extract text from PDF.
+        Uses direct extraction first.
+        Falls back to OCR for image PDFs.
+        """
+
         all_text = ""
+
         try:
-            doc = fitz.open(pdf_path)
-            for i in range(doc.page_count):
-                page = doc.load_page(i)
-                
-                # 1. Attempt fast direct text extraction first
+            document = fitz.open(pdf_path)
+
+            for page_number in range(document.page_count):
+
+                page = document.load_page(page_number)
+
                 try:
-                    page_text = page.get_text("text") or ""
+                    text = page.get_text("text")
+
                 except Exception:
-                    try:
-                        page_text = page.get_text() or ""
-                    except Exception:
-                        page_text = ""
+                    text = ""
 
-                # 2. If text exists, use it. If not, Fallback to OCR.
-                if page_text and page_text.strip():
-                    all_text += page_text.strip() + "\n\n"
+                if text and text.strip():
+
+                    all_text += text.strip() + "\n\n"
+
                 else:
-                    # ONLY load the OCR reader if we actually hit an image-only page
-                    print(f"Page {i+1} appears to be an image. Running OCR...")
+
+                    print(
+                        f"Page {page_number + 1} has no text. Running OCR..."
+                    )
+
                     reader = get_ocr_reader()
-                    
-                    pix = page.get_pixmap(dpi=300)
-                    img_bytes = pix.tobytes("png")
-                    img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-                    img_arr = np.array(img)
-                    
-                    # detail=0 returns strings; paragraph=True attempts to merge lines
-                    results = reader.readtext(img_arr, detail=0, paragraph=True)
-                    page_text = "\n".join(results) if results else ""
-                    
-                    if page_text and page_text.strip():
-                        all_text += page_text + "\n\n"
-            doc.close()
-        except Exception as e:
-            print(f"Error processing PDF {pdf_path}: {e}")
+
+                    pix = page.get_pixmap(dpi=150)
+
+                    image = Image.open(
+                        io.BytesIO(
+                            pix.tobytes("png")
+                        )
+                    ).convert("RGB")
+
+                    image_array = np.array(image)
+
+                    results = reader.readtext(
+                        image_array,
+                        detail=0,
+                        paragraph=True
+                    )
+
+                    extracted_text = "\n".join(results)
+
+                    all_text += extracted_text + "\n\n"
+
+            document.close()
+
+
+        except Exception as error:
+
+            print(
+                f"PDF extraction failed: {error}"
+            )
+
             return None
 
-        if not all_text or not all_text.strip():
-            msg = "File is blank or unreadable"
-            print(f"{msg}: {pdf_path}")
+
+        if not all_text.strip():
+
+            print("No readable text found in PDF.")
+
             return None
+
 
         return all_text
 
+
     def _invoke_chain(self, template, variables):
-        """Helper to run a LangChain prompt."""
+        """
+        Send request to Ollama.
+        Trims very large text for faster processing.
+        """
+
+        if "text" in variables:
+
+            size = len(
+                variables["text"]
+            )
+
+            if size > 1500:
+
+                print(
+                    f"Reducing text from {size} characters to 1500 characters."
+                )
+
+                variables["text"] = variables["text"][:1500]
+
+
+        print("Sending request to Ollama...")
+
+
         prompt = PromptTemplate(
             input_variables=list(variables.keys()),
             template=template
         )
-        chain = prompt | self.llm | StrOutputParser()
-        return chain.invoke(variables).strip()
+
+
+        chain = (
+            prompt
+            | self.llm
+            | StrOutputParser()
+        )
+
+
+        try:
+
+            response = chain.invoke(
+                variables
+            )
+
+            print(
+                "Ollama response received successfully."
+            )
+
+            return response.strip()
+
+
+        except Exception as error:
+
+            print(
+                f"Ollama invocation failed: {error}"
+            )
+
+            return ""
+
 
     def extract_skills(self, text, is_jd=False):
-        """Extracts skills from Resume or JD text."""
-        context_label = "Job Description" if is_jd else "Resume Text"
-        prompt = f"""
-        You are an expert HR assistant. Extract a comprehensive list of distinct technical and soft skills 
-        from the following {{text_type}}. Present them as a comma-separated list. 
-        Do not include any other text.
-        
-        {context_label}:
-        {{text}}
-        
-        Skills:
         """
-        return self._invoke_chain(prompt, {"text": text, "text_type": context_label})
+        Extract skills using keyword matching.
+        """
+
+        skills_database = [
+            "Python",
+            "Java",
+            "C++",
+            "JavaScript",
+            "HTML",
+            "CSS",
+            "React",
+            "Node.js",
+            "Flask",
+            "Django",
+            "SQL",
+            "MySQL",
+            "MongoDB",
+            "Machine Learning",
+            "Deep Learning",
+            "AI",
+            "Data Analysis",
+            "Git",
+            "GitHub",
+            "Docker",
+            "AWS",
+            "REST API",
+            "Problem Solving",
+            "Communication",
+            "Leadership",
+            "OOP",
+            "DSA"
+        ]
+
+        found_skills = []
+
+        lower_text = text.lower()
+
+        for skill in skills_database:
+            if skill.lower() in lower_text:
+                found_skills.append(skill)
+
+        result = ", ".join(found_skills)
+
+        print("Extracted skills:", result)
+
+        return result
+
 
     def get_comparison(self, resume_skills, jd_skills):
-        """Returns common and missing skills as JSON objects."""
-        
-        common_prompt = """
-        Given these lists:
-        Resume Skills: {resume_skills}
-        JD Skills: {jd_skills}
-        
-        Identify ONLY skills in BOTH lists.
-        Return EXACTLY in this JSON format: {{ "common_skills": [...] }}
         """
-        
-        missing_prompt = """
-        Given these lists:
-        Resume Skills: {resume_skills}
-        JD Skills: {jd_skills}
-        
-        Identify ONLY skills in JD but NOT in Resume.
-        Return EXACTLY in this JSON format: {{ "skills_to_learn": [...] }}
+        Compare Resume and JD skills.
+        Uses Python matching instead of LLM for accuracy.
         """
 
-        common_raw = self._invoke_chain(common_prompt, {"resume_skills": resume_skills, "jd_skills": jd_skills})
-        missing_raw = self._invoke_chain(missing_prompt, {"resume_skills": resume_skills, "jd_skills": jd_skills})
-        
-        return self._clean_json(common_raw), self._clean_json(missing_raw)
+        print("Comparing skills using Python matching...")
 
-    def generate_interview_questions(self, common_skills_json_str):
-        """Generates 10 interview questions based on common skills."""
+
+        def normalize(skills):
+            return {
+                skill.strip().lower()
+                for skill in skills.split(",")
+                if skill.strip()
+            }
+
+
+        resume_set = normalize(resume_skills)
+        jd_set = normalize(jd_skills)
+
+
+        common = sorted(
+            resume_set.intersection(jd_set)
+        )
+
+        missing = sorted(
+            jd_set.difference(resume_set)
+        )
+
+
+        result_common = {
+            "common_skills": [
+                skill.title()
+                for skill in common
+            ]
+        }
+
+
+        result_missing = {
+            "skills_to_learn": [
+                skill.title()
+                for skill in missing
+            ]
+        }
+
+
+        print(
+            "Matched skills:",
+            result_common
+        )
+
+        print(
+            "Missing skills:",
+            result_missing
+        )
+
+
+        return (
+            result_common,
+            result_missing
+        )
+
+
+    def generate_interview_questions(self, common_skills_json):
+        """
+        Generate interview questions in strict JSON format.
+        """
+
         prompt = """
-        You are an expert technical interviewer.
-        Given this JSON of common skills: {common_json}
-        
-        Generate exactly 10 practical, non-generic interview questions.
-        Return ONLY JSON: {{ "questions": ["q1", "q2", ...] }}
-        """
-        raw = self._invoke_chain(prompt, {"common_json": str(common_skills_json_str)})
-        return self._clean_json(raw)
+        You are a JSON API.
 
-    def _clean_json(self, raw_str):
-        """Cleans LLM output to valid dict."""
-        cleaned = raw_str.strip().strip("'").strip('"').replace("\\'", "'")
-        # Attempt to find JSON block if wrapped in markdown
+        STRICT RULES:
+        1. Return ONLY valid JSON.
+        2. Do not write explanations.
+        3. Do not write Python code.
+        4. Do not use markdown.
+        5. Your response must start with { and end with }.
+        6. Generate exactly 5 practical technical interview questions.
+
+        Skills:
+        {common_json}
+
+        Return exactly in this format:
+
+        {{
+            "questions": [
+                "Question 1",
+                "Question 2",
+                "Question 3",
+                "Question 4",
+                "Question 5"
+            ]
+        }}
+        """
+
+        print("Generating interview questions...")
+
+
+        response = self._invoke_chain(
+            prompt,
+            {
+                "common_json": str(common_skills_json)
+            }
+        )
+
+
+        print(
+            "Raw question response:",
+            response
+        )
+
+
+        return self._clean_json(response)
+
+
+    def _clean_json(self, raw_text):
+        """
+        Cleans and converts Ollama JSON response into Python dictionary.
+        Provides fallback questions if JSON parsing fails.
+        """
+
+        if not raw_text:
+            print("Empty response received from Ollama. Using fallback questions.")
+
+            return {
+                "questions": [
+                    "Explain your strongest programming language.",
+                    "Describe a challenging project you have worked on.",
+                    "What are the core concepts of object-oriented programming?",
+                    "How do you debug and optimize your code?",
+                    "Explain a technical problem you solved recently."
+                ]
+            }
+
+        cleaned = (
+            raw_text
+            .strip()
+            .strip("'")
+            .strip('"')
+            .replace("\\'", "'")
+        )
+
+        # Handle markdown JSON blocks from LLM
         if "```json" in cleaned:
-            import re
-            match = re.search(r'```json\s*(\{.*?\})\s*```', cleaned, re.DOTALL)
-            if match: cleaned = match.group(1)
-            
+
+            match = re.search(
+                r"```json\s*(\{.*?\})\s*```",
+                cleaned,
+                re.DOTALL
+            )
+
+            if match:
+                cleaned = match.group(1)
+
+        # Try normal JSON parsing
         try:
             return json.loads(cleaned)
-        except json.JSONDecodeError:
-            print(f"JSON Parse Error: {cleaned}")
-            return None
+
+        except json.JSONDecodeError as error:
+
+            print(
+                f"JSON parsing failed: {error}"
+            )
+
+            print(
+                "Invalid JSON received from Ollama:"
+            )
+
+            print(cleaned)
+
+            print(
+                "Using fallback interview questions."
+            )
+
+            return {
+                "questions": [
+                    "Explain your experience with the technologies used in your projects.",
+                    "Describe a difficult technical issue you faced and how you solved it.",
+                    "What programming concepts do you use most frequently?",
+                    "How would you improve the performance of an application?",
+                    "What coding best practices do you follow?"
+                ]
+            }
