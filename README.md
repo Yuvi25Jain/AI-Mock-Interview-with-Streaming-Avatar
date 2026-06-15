@@ -1,64 +1,269 @@
-AI Mock Interview with Streaming Avatar
-📌 Overview
-This project simulates mock technical interviews using an AI-powered system with a real-time streaming avatar.
-The goal is to provide candidates with an interactive, human-like interview experience that helps them practice communication, problem-solving, and confidence building.
+# 🎯 MOCKMATE – AI Powered Mock Interview Platform with Streaming Avatar
 
-🚀 Features
-AI-driven question generation based on interview topics (DSA, system design, behavioral).
+## 📌 Project Overview
 
-Streaming avatar for realistic interviewer presence.
+MOCKMATE is an AI-powered mock interview platform designed to help students and job seekers prepare for technical interviews through personalized resume analysis, job description matching, AI-generated interview questions, coding assessments, performance analytics, and AI-based interview interaction.
 
-Real-time speech-to-text and text-to-speech integration.
+The platform analyzes the candidate's resume against a target job description, identifies matching and missing skills, generates customized interview questions, conducts coding evaluations, and provides detailed feedback to improve interview readiness.
 
-Performance feedback with scoring metrics and improvement suggestions.
+---
 
-🛠️ Tech Stack
-Frontend: React.js / Next.js
+## 🚀 Key Features
 
-Backend: Node.js / Express
+### 🔐 User Authentication
+- Secure user registration and login system.
+- Session-based authentication using Flask.
+- Personalized interview history for each user.
 
-AI Models: OpenAI / Azure Cognitive Services
+---
 
-Avatar Streaming: WebRTC / Three.js
+### 📄 Resume & Job Description Analysis
+- Upload Resume and Job Description in PDF format.
+- Extracts text using PyMuPDF.
+- OCR support using EasyOCR for scanned documents.
+- AI-based skill extraction and analysis.
+- Identifies matching skills and areas for improvement.
+- Generates customized technical interview questions.
 
-Database: MongoDB / PostgreSQL
+---
 
-📂 Project Structure
-Code
-├── frontend/        # UI for candidate interaction
-├── backend/         # APIs and interview logic
-├── avatar/          # Streaming avatar integration
-├── docs/            # Documentation and resources
-└── README.md        # Project overview
-⚙️ Setup Instructions
-Clone the repository
+### 🤖 AI Mock Interview Assistant
+- Interactive AI-based interview workflow.
+- Context-aware interview questions based on Resume and JD.
+- Conversation history tracking.
+- Local LLM integration using Ollama.
+- Designed for real-time avatar-based interaction using HeyGen Streaming API.
 
-bash
-git clone https://github.com/<your-org>/<repo-name>.git
-cd <repo-name>
-Install dependencies
+---
 
-bash
-npm install
-Configure environment variables  
-Create a .env file with API keys for AI and streaming services.
+### 💻 Coding Assessment Module
+- Programming challenges with problem statements.
+- Code editor interface.
+- Execution and evaluation workflow.
+- Performance-based assessment.
 
-Run the project
+---
 
-bash
-npm run dev
-🤝 Contribution Guidelines
-Fork the repository and create a feature branch.
+### 📊 Performance Analytics & Feedback
+- Interview performance dashboard.
+- Skill-based feedback.
+- Strengths and improvement areas.
+- Progress tracking across multiple interview sessions.
 
-Commit changes with clear messages.
+---
 
-Open a Pull Request for review.
+### 📜 Interview History
+- Stores previous interview sessions.
+- Tracks interview dates and activity history.
+- Enables users to review their preparation journey.
 
-Follow coding standards and document your work.
+---
 
-📈 Future Enhancements
-Multi-language interview support.
+## 🏗️ System Architecture
 
-Advanced analytics dashboard.
+```
+User
+ |
+ v
+Flask Web Application
+ |
+ +-- Authentication Module
+ |
+ +-- Resume/JD Analyzer
+ |       |
+ |       +-- PyMuPDF
+ |       +-- EasyOCR
+ |       +-- Ollama LLM
+ |
+ +-- AI Interview Module
+ |       |
+ |       +-- LangChain
+ |       +-- Ollama
+ |       +-- HeyGen Avatar Integration
+ |
+ +-- Coding Evaluation Module
+ |
+ +-- Analytics & Feedback
+ |
+SQLite Database
+```
 
-Integration with LinkedIn for profile-based interview questions.
+---
+
+## 🛠️ Technology Stack
+
+### Frontend
+- HTML5
+- CSS3
+- JavaScript
+- Jinja2 Templates
+
+### Backend
+- Python
+- Flask
+- Flask Blueprints
+- SQLite
+
+### Artificial Intelligence & NLP
+- Ollama Local LLM
+- LangChain
+- Google Gemini API (fallback support)
+- Faster Whisper (Speech-to-Text)
+
+### Document Processing
+- PyMuPDF
+- EasyOCR
+- Pillow
+- NumPy
+
+### Avatar & Communication
+- HeyGen Streaming Avatar API
+- LiveKit
+
+---
+
+## 📂 Project Structure
+
+```
+AI-Mock-Interview-with-Streaming-Avatar/
+│
+├── app/
+│   ├── routes/              # Application routes
+│   ├── services/            # AI, OCR and analysis services
+│   ├── templates/           # HTML pages
+│   ├── static/              # CSS, JS, assets
+│   ├── db.py                # Database operations
+│   └── config.py            # Application configuration
+│
+├── instance/
+│   └── chat.db              # SQLite database
+│
+├── tests/                   # Testing files
+├── screenshots/             # Project UI screenshots
+├── run.py                   # Flask application entry point
+├── requirements.txt         # Python dependencies
+└── README.md                # Project documentation
+```
+
+---
+
+## ⚙️ Installation & Setup
+
+### 1. Clone Repository
+
+```bash
+git clone https://github.com/Yuvi25Jain/AI-Mock-Interview-with-Streaming-Avatar.git
+
+cd AI-Mock-Interview-with-Streaming-Avatar
+```
+
+---
+
+### 2. Create Virtual Environment
+
+```bash
+python -m venv venv
+```
+
+Activate Environment:
+
+**Windows**
+
+```bash
+venv\Scripts\activate
+```
+
+---
+
+### 3. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+### 4. Install & Run Ollama
+
+Install Ollama from:
+
+https://ollama.com/
+
+Download a supported model:
+
+```bash
+ollama pull llama3.2
+```
+
+Verify:
+
+```bash
+ollama list
+```
+
+---
+
+### 5. Configure Environment Variables
+
+Add your API keys in the configuration file:
+
+- HeyGen API Key
+- Google Gemini API Key (optional fallback)
+
+---
+
+### 6. Run the Application
+
+```bash
+python run.py
+```
+
+Open the browser:
+
+```
+http://127.0.0.1:5000
+```
+
+---
+
+## 📸 Application Modules
+
+- Login & Registration Interface
+- Resume Upload Interface
+- Job Description Analysis
+- Skill Gap Analysis
+- AI Interview Room
+- Coding Round
+- Performance Dashboard
+- Analytics Dashboard
+- Interview History
+
+---
+
+## 🔮 Future Enhancements
+
+- Improve real-time avatar interaction.
+- Deploy cloud-based scalable LLM services.
+- Advanced coding evaluation engine.
+- AI-powered interview scoring.
+- Multi-language interview support.
+- Voice emotion analysis and personalized feedback.
+
+---
+
+## 👨‍💻 Developed By
+
+**Yuvi Jain**
+
+AI Mock Interview Platform – Final Year Project
+
+---
+
+## ⭐ Acknowledgements
+
+- Flask Community
+- Ollama
+- LangChain
+- HeyGen
+- LiveKit
+- Open Source AI Community
